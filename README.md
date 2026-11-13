@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Adjuntos de justificaciones (S3)
+
+Configura en el servidor `AWS_REGION`, `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY` y `S3_BUCKET_NAME`. En desarrollo usa `.env.local`
+(ignorado por Git); en producción usa las variables del proveedor.
+Reinicia el servidor después de cambiarlas. Nunca uses `NEXT_PUBLIC_` para estas claves.
+
+La identidad de AWS necesita `s3:PutObject`, `s3:GetObject` y `s3:DeleteObject`
+sobre `arn:aws:s3:::altera-crm/attendance-system/justifications/*`.
+Mantén bloqueado el acceso público al bucket. La aplicación sirve los archivos
+tras verificar la sesión de administrador; no requiere CORS en el bucket.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

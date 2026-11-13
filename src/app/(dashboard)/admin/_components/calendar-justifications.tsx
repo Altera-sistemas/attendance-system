@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 
 interface Entry { id: number; message: string | null; attachment_name: string | null; created_at: string; admin_name: string }
 
-export function CalendarJustifications({ userId, date }: { userId?: string; date: string }) {
+export function CalendarJustifications({ userId, date, onSaved }: { userId?: string; date: string; onSaved?: () => void }) {
     const [entries, setEntries] = useState<Entry[]>([]);
     const [sending, setSending] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -42,6 +42,7 @@ export function CalendarJustifications({ userId, date }: { userId?: string; date
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'No se pudo guardar');
             setEntries(previous => [result.entry, ...previous]);
+            onSaved?.();
             form.reset();
             setFeedback('Registro guardado. Solo visible para administradores.');
         } catch (error) {
@@ -71,7 +72,10 @@ export function CalendarJustifications({ userId, date }: { userId?: string; date
             {loading ? <p>Cargando…</p> : entries.length === 0 ? <p className="text-sm text-slate-500">Sin justificaciones registradas.</p> : entries.map(entry => <div key={entry.id} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
                 <p className="text-xs text-slate-500">{entry.admin_name} · {new Date(entry.created_at).toLocaleString('es-PE', { timeZone: 'America/Lima' })}</p>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{entry.message || (entry.attachment_name ? 'Documento de justificación adjunto' : 'Sin observación ni archivo')}</p>
-                {entry.attachment_name && <a className="mt-2 inline-block text-sm text-blue-600 underline" href={`/api/admin/calendar-justifications/${entry.id}/attachment`}>Descargar {entry.attachment_name}</a>}
+                {entry.attachment_name && <div className="mt-2 flex flex-wrap gap-3 text-sm text-blue-600">
+                    <a className="underline" href={`/api/admin/calendar-justifications/${entry.id}/attachment?preview=1`} target="_blank" rel="noopener noreferrer">Ver archivo</a>
+                    <a className="underline" href={`/api/admin/calendar-justifications/${entry.id}/attachment`}>Descargar {entry.attachment_name}</a>
+                </div>}
             </div>)}
         </div>
     </div>;

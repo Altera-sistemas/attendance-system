@@ -67,6 +67,14 @@ interface CalendarDay {
     }>;
 }
 
+interface DayJustification {
+    id: number;
+    date: string;
+    message: string | null;
+    attachment_name: string | null;
+    user_name: string;
+}
+
 const USER_COLORS = [
     { bg: 'bg-blue-500', border: 'border-blue-500', text: 'text-blue-700', light: 'bg-blue-50' },
     { bg: 'bg-green-500', border: 'border-green-500', text: 'text-green-700', light: 'bg-green-50' },
@@ -85,6 +93,9 @@ export function AttendanceCalendarView() {
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [users, setUsers] = useState<Array<{ id: number; name: string }>>([]);
     const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+    const [justifications, setJustifications] = useState<DayJustification[]>([]);
+    const [justificationRevision, setJustificationRevision] = useState(0);
+    const [justificationError, setJustificationError] = useState('');
     const [loading, setLoading] = useState(false);
     const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
     const [showDayDetail, setShowDayDetail] = useState(false);
@@ -106,6 +117,30 @@ export function AttendanceCalendarView() {
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    useEffect(() => {
+        if (!selectedUser || !calendarDays.length) return;
+        const controller = new AbortController();
+        const params = new URLSearchParams({ userId: selectedUser, startDate: calendarDays[0].date, endDate: calendarDays[calendarDays.length - 1].date });
+        fetch(`/api/admin/calendar-justifications?${params}`, { signal: controller.signal })
+            .then(async response => {
+                if (!response.ok) throw new Error('No se pudieron cargar las justificaciones del calendario');
+                return response.json();
+            })
+            .then(data => {
+                if (!controller.signal.aborted) {
+                    setJustifications(data.entries);
+                    setJustificationError('');
+                }
+            })
+            .catch(error => {
+                if (!controller.signal.aborted) {
+                    setJustifications([]);
+                    setJustificationError(error.message);
+                }
+            });
+        return () => controller.abort();
+    }, [selectedUser, calendarDays, justificationRevision]);
 
     useEffect(() => {
         if (selectedUser && selectedUser !== '') {
@@ -640,6 +675,7 @@ export function AttendanceCalendarView() {
                             {error}
                         </div>
                     )}
+                    {justificationError && <p role="alert" className="mb-4 text-sm text-red-600">{justificationError}</p>}
 
                     {selectedUser && (
                         <>
@@ -682,7 +718,7 @@ export function AttendanceCalendarView() {
                                                 }
                                             }}
                                             className={`
-                                                aspect-square p-2 rounded-lg border text-left transition-all hover:scale-105 relative
+                                                min-h-24 sm:min-h-32 p-2 rounded-lg border text-left transition-all hover:scale-105 relative min-w-0
                                                 ${!day.isCurrentMonth ? 'opacity-30' : ''}
                                                 ${day.isToday ? 'ring-2 ring-blue-500' : ''}
                                                 ${selectedUser === 'all' ? 'bg-white dark:bg-slate-900' : getStatusColor(day.status)}
@@ -720,6 +756,15 @@ export function AttendanceCalendarView() {
                                                         </p>
                                                     </div>
                                                 )}
+                                                <div className="mt-1 space-y-1">
+                                                    {justifications.filter(entry => entry.date === day.date).map(entry => (
+                                                        <div key={entry.id} className="rounded border border-amber-300 bg-amber-50 px-1 py-0.5 text-[10px] text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100" title={`${selectedUser === 'all' ? entry.user_name + ': ' : ''}${entry.message || 'Sin observación'}${entry.attachment_name ? '\nArchivo: ' + entry.attachment_name : ''}`}>
+                                                            {selectedUser === 'all' && <p className="truncate font-semibold">{entry.user_name}</p>}
+                                                            <p className="line-clamp-2 break-words whitespace-pre-wrap">{entry.message || (entry.attachment_name ? 'Justificación adjunta' : 'Sin observación ni archivo')}</p>
+                                                            {entry.attachment_name && <p className="truncate font-medium">Archivo: {entry.attachment_name}</p>}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </button>
                                     ))}
@@ -773,7 +818,7 @@ export function AttendanceCalendarView() {
                                 <TabsTab value="notifications">Justificaciones</TabsTab>
                             </TabsList>
                             <TabsPanel value="notifications">
-                                <CalendarJustifications date={selectedDay.date} userId={selectedUser && selectedUser !== 'all' ? selectedUser : undefined} />
+                                <CalendarJustifications date={selectedDay.date} userId={selectedUser && selectedUser !== 'all' ? selectedUser : undefined} onSaved={() => setJustificationRevision(value => value + 1)} />
                             </TabsPanel>
                             <TabsPanel value="records">
                             <div className="mb-4">
