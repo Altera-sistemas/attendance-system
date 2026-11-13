@@ -36,6 +36,8 @@ import { LocationViewer } from './location-viewer';
 import { formatDateToPeruYYYYMMDD, calculateBreakTime } from '@/lib/date-utils';
 import ExcelJS from 'exceljs';
 import { CreateManualRecord } from './create-manual-record';
+import { Tabs, TabsList, TabsTab, TabsPanel } from '@/components/ui/tabs';
+import { CalendarJustifications } from './calendar-justifications';
 
 interface CalendarDay {
     date: string;
@@ -765,6 +767,15 @@ export function AttendanceCalendarView() {
                                 </h3>
                                 <button onClick={() => setShowDayDetail(false)} className="p-2 rounded-lg hover:bg-slate-100">✕</button>
                             </div>
+                            <Tabs defaultValue="records" key={`${selectedUser}-${selectedDay.date}`}>
+                            <TabsList>
+                                <TabsTab value="records">Marcaciones</TabsTab>
+                                <TabsTab value="notifications">Justificaciones</TabsTab>
+                            </TabsList>
+                            <TabsPanel value="notifications">
+                                <CalendarJustifications date={selectedDay.date} userId={selectedUser && selectedUser !== 'all' ? selectedUser : undefined} />
+                            </TabsPanel>
+                            <TabsPanel value="records">
                             <div className="mb-4">
                                 <Button
                                     onClick={() => {
@@ -848,6 +859,8 @@ export function AttendanceCalendarView() {
                             ) : (
                                 <p className="text-center text-slate-500 py-4">Sin registros</p>
                             )}
+                            </TabsPanel>
+                            </Tabs>
                         </div>
                     </div>
                 )}

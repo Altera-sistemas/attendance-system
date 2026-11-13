@@ -22,6 +22,20 @@
       "when": 1788391171000,
       "tag": "0002_safe_attendance_timestamp",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794528000000,
+      "tag": "0003_notification_attachments",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794528000001,
+      "tag": "0004_attendance_justifications",
+      "breakpoints": true
     }
   ]
 }

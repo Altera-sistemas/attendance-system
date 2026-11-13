@@ -228,6 +228,9 @@ export const notifications = pgTable(
     message: text("message")
       .notNull(),
 
+    attachmentUrl: text("attachment_url"),
+    attachmentName: text("attachment_name"),
+
     type: notificationTypeEnum("type"),
 
     isRead: boolean("is_read")
@@ -241,6 +244,17 @@ export const notifications = pgTable(
 /* =========================
    TYPES
 ========================= */
+
+export const attendanceJustifications = pgTable('attendance_justifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  attendanceDate: date('attendance_date').notNull(),
+  message: text('message'),
+  attachmentUrl: text('attachment_url'),
+  attachmentName: text('attachment_name'),
+  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
